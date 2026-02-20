@@ -31,8 +31,8 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
 .tpl-card:hover,.tpl-card.sel{border-color:#e94560}
 .tpl-card canvas{display:block;width:100%}
 .tpl-name{padding:10px;font-size:.9rem;font-weight:600;text-align:center}
-.cam-wrap{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;flex-direction:column}
-#cam-video{flex:1;width:100%;object-fit:cover;display:block}
+.cam-wrap{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;flex-direction:column;overflow:hidden}
+#cam-video{flex:1;width:100%;max-height:calc(100vh - 110px);object-fit:cover;display:block}
 .cnt-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:10}
 .cnt-overlay.hidden{display:none}
 #cnt-ring{position:relative;width:190px;height:190px}
@@ -43,7 +43,7 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
 .cam-flash{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;opacity:0;pointer-events:none;z-index:20}
 .cam-flash.go{animation:flash .35s ease forwards}
 @keyframes flash{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
-.cam-hud{background:rgba(8,8,18,.92);padding:14px 20px;height:130px;flex-shrink:0;display:flex;align-items:center;gap:20px}
+.cam-hud{background:rgba(8,8,18,.95);padding:10px 16px;height:110px;height:auto;flex-shrink:0;display:flex;align-items:center;gap:16px;z-index:50;position:relative}
 .strip-wrap{flex:1;overflow:hidden}
 .photo-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
 .photo-strip .thumb{width:88px;height:66px;object-fit:cover;border-radius:7px;border:2px solid transparent;flex-shrink:0}
@@ -387,5 +387,6 @@ $('btn-new').addEventListener('click',()=>{
 </script>
 </body>
 </html>
+
 
 
