@@ -227,13 +227,20 @@ document.querySelectorAll('.count-btn').forEach(btn => {
     btn.classList.add('active');
     S.count = parseInt(btn.dataset.count);
     $('req-count').textContent = S.count;
+    S.photos   = [];   // clear old photos only here at start
+    S.selected = [];
+    $('photo-strip').innerHTML = '';
+    $('prog-fill').style.width = '0%';
+    $('cap-label').textContent = 'Ready';
     await initCamera();
     show('camera');
   });
 });
-
-function buildTplGrid(){
-  const grid=$('tpl-grid');grid.innerHTML='';S.template=null;$('btn-go-cam').disabled=true;
+function buildTplGrid() {
+  const grid = $('tpl-grid');
+  grid.innerHTML = '';
+  S.template = null;
+  $('btn-go-cam').disabled = true;
   $('btn-go-cam').textContent = S.photos.length === 10 ? 'Apply Template →' : 'Open Camera →';
   TEMPLATES.forEach(tpl=>{
     const card=document.createElement('div');card.className='tpl-card';
@@ -325,8 +332,16 @@ function captureFrame(idx) {
   $('photo-strip').appendChild(img);img.scrollIntoView({behavior:'smooth',inline:'end'});
   setTimeout(()=>img.classList.remove('latest'),600);
 }
-function buildSelectionScreen(){
-  const grid=$('sel-grid');grid.innerHTML='';S.selected=[];$('btn-confirm').disabled=true;
+function buildSelectionScreen() {
+  const grid = $('sel-grid');
+  grid.innerHTML = '';
+  S.selected = [];
+  $('btn-confirm').disabled = true;
+  if (!S.photos || S.photos.length === 0) {
+    alert('No photos found. Please take photos first.');
+    show('camera');
+    return;
+  }
   S.photos.forEach((url,idx)=>{
     const item=document.createElement('div');item.className='sel-item';item.dataset.idx=idx;
     const img=document.createElement('img');img.src=url;img.alt=`Photo ${idx+1}`;
@@ -464,9 +479,16 @@ $('btn-print').addEventListener('click',()=>{
   pw.document.write(`<!DOCTYPE html><html><head><style>*{margin:0;padding:0}body{display:flex;justify-content:center;align-items:center;min-height:100vh}img{max-width:100%}@media print{img{width:100%}}</style></head><body><img src="${imgSrc}" onload="setTimeout(()=>{window.print();window.close();},300)"></body></html>`);
   pw.document.close();
 });
-$('btn-new').addEventListener('click',()=>{
-  clearInterval(S.timerHandle);if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
-  Object.assign(S,{count:4,template:null,photos:[],selected:[],gifDataUrl:null});
+$('btn-new').addEventListener('click', () => {
+  clearInterval(S.timerHandle);
+  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  // Reset ALL state cleanly
+  S.count      = 4;
+  S.template   = null;
+  S.photos     = [];
+  S.selected   = [];
+  S.gifDataUrl = null;
+  S.workerUrl  = S.workerUrl; // keep worker blob URL
   $('photo-strip').innerHTML='';$('sel-grid').innerHTML='';$('qr-out').innerHTML='';$('qr-url').textContent='';
   $('prog-fill').style.width='0%';$('cap-label').textContent='Ready';
   document.querySelectorAll('.count-btn').forEach(b=>b.classList.remove('active'));
@@ -476,6 +498,7 @@ $('btn-new').addEventListener('click',()=>{
 </script>
 </body>
 </html>
+
 
 
 
