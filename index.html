@@ -184,8 +184,9 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
       </div>
     </div>
     <div class="row-actions" style="margin-top:28px">
-      <button id="btn-print" class="btn-pri btn-lg">Print</button>
-      <button id="btn-new" class="btn-sec">New Session</button>
+      <button id="btn-print" class="btn-pri btn-lg">🖨 Print</button>
+      <button id="btn-download-all" class="btn-pri btn-lg">⬇ Download All</button>
+      <button id="btn-new" class="btn-sec">↺ New Session</button>
     </div>
   </div>
 </div>
@@ -268,10 +269,33 @@ $('btn-go-cam').addEventListener('click', async () => {
 });
 
 let mediaStream=null;
-async function initCamera(){
-  if(mediaStream)return;
-  try{mediaStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});$('cam-video').srcObject=mediaStream;await $('cam-video').play();}
-  catch(err){alert('Camera access denied. Allow camera in browser settings.');}
+async function initCamera() {
+  if (mediaStream) return;
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'user',
+        width:  { ideal: 4096 },
+        height: { ideal: 2160 },
+        frameRate: { ideal: 60 },
+        aspectRatio: { ideal: 16/9 }
+      },
+      audio: false
+    });
+    $('cam-video').srcObject = mediaStream;
+    await $('cam-video').play();
+  } catch (err) {
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      });
+      $('cam-video').srcObject = mediaStream;
+      await $('cam-video').play();
+    } catch (err2) {
+      alert('Camera access denied. Allow camera in browser settings.');
+    }
+  }
 }
 $('btn-start-cap').addEventListener('click',()=>startCapture());
 async function startCapture(){
@@ -286,17 +310,21 @@ async function runCountdown(from){
   for(let n=from;n>=1;n--){numEl.textContent=n;ringEl.style.strokeDashoffset=circum*(1-n/from);await sleep(950);}
   overlay.classList.add('hidden');ringEl.style.strokeDashoffset=0;
 }
-function captureFrame(idx){
-  const video=$('cam-video'),canvas=$('cap-canvas');
-  canvas.width=video.videoWidth||1280;canvas.height=video.videoHeight||720;
-  canvas.getContext('2d').drawImage(video,0,0);
-  const url=canvas.toDataURL('image/jpeg',.92);S.photos.push(url);
+function captureFrame(idx) {
+  const video  = $('cam-video');
+  const canvas = $('cap-canvas');
+  canvas.width  = video.videoWidth  || 1920;
+  canvas.height = video.videoHeight || 1080;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled  = true;
+  ctx.imageSmoothingQuality  = 'high';
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const url = canvas.toDataURL('image/jpeg', 1.0);
   const flash=$('cam-flash');flash.classList.add('go');setTimeout(()=>flash.classList.remove('go'),350);
   const img=document.createElement('img');img.src=url;img.className='thumb latest';
   $('photo-strip').appendChild(img);img.scrollIntoView({behavior:'smooth',inline:'end'});
   setTimeout(()=>img.classList.remove('latest'),600);
 }
-
 function buildSelectionScreen(){
   const grid=$('sel-grid');grid.innerHTML='';S.selected=[];$('btn-confirm').disabled=true;
   S.photos.forEach((url,idx)=>{
@@ -345,7 +373,7 @@ async function proceedToPreview(){
 }
 async function composeTemplate(){
   const tpl=S.template,count=S.count,photos=S.selected.map(i=>S.photos[i]);
-  const W=1200,cols=2,rows=Math.ceil(count/cols),HDR=90,FTR=50,PAD=36;
+  const W=2400,cols=2,rows=Math.ceil(count/cols),HDR=90,FTR=50,PAD=36;
   const cW=(W-PAD*(cols+1))/cols,cH=Math.round(cW*.75);
   const H=HDR+PAD+rows*cH+(rows-1)*PAD+PAD+FTR;
   const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
@@ -362,10 +390,19 @@ async function composeTemplate(){
   ctx.font='26px sans-serif';ctx.fillStyle=tpl.fg+'aa';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(date,W/2,H-14);
   return canvas;
 }
-async function makeGIF(){
-  return new Promise(async(resolve,reject)=>{
-    const gif=new GIF({workers:2,quality:12,width:640,height:480,workerScript:S.workerUrl||'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'});
-    const tmp=document.createElement('canvas');tmp.width=640;tmp.height=480;const ctx=tmp.getContext('2d');
+async function makeGIF() {
+  return new Promise(async (resolve, reject) => {
+    const gif = new GIF({
+      workers:      4,   
+      quality:      1,    
+      width:        1280,
+      height:       720,
+      workerScript: S.workerUrl || 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'
+    });
+    const tmp = document.createElement('canvas');
+    tmp.width  = 1280;
+    tmp.height = 720;
+    const ctx=tmp.getContext('2d');
     const imgs=await Promise.all(S.photos.map(loadImg));
     imgs.forEach(img=>{ctx.fillStyle='#000';ctx.fillRect(0,0,640,480);drawCover(ctx,img,0,0,640,480);gif.addFrame(tmp,{copy:true,delay:450});});
     gif.on('finished',blob=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsDataURL(blob);});
@@ -376,7 +413,7 @@ async function uploadAndQR(tplCanvas){
   const qrBox=$('qr-out');qrBox.innerHTML='';
   try{
     if(!IMGBB_KEY||IMGBB_KEY==='PASTE_YOUR_KEY_HERE')throw new Error('No API key');
-    const b64=tplCanvas.toDataURL('image/jpeg',.88).split(',')[1];const form=new FormData();form.append('image',b64);
+    const b64=tplCanvas.toDataURL('image/jpeg',1.0).split(',')[1];const form=new FormData();form.append('image',b64);
     const res=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:'POST',body:form});
     const data=await res.json();if(!data.success)throw new Error('Upload failed');
     const url=data.data.display_url;
@@ -388,10 +425,42 @@ async function uploadAndQR(tplCanvas){
     $('qr-url').textContent='Download photos using buttons below';
   }
 }
-function downloadTemplate(){const link=document.createElement('a');link.download=`photobooth_${Date.now()}.jpg`;link.href=$('tpl-out').toDataURL('image/jpeg',.95);link.click();}
+function downloadTemplate(){const link=document.createElement('a');link.download=`photobooth_${Date.now()}.jpg`;link.href=$('tpl-out').toDataURL('image/jpeg',1.0);link.click();}
 function downloadGif(){const link=document.createElement('a');link.download=`photobooth_gif_${Date.now()}.gif`;link.href=S.gifDataUrl;link.click();}
+async function downloadAll() {
+  loading('Preparing your download package...');
+  const pause = ms => new Promise(r => setTimeout(r, ms));
+  try {
+    for (let i = 0; i < S.photos.length; i++) {
+      loading(`Downloading photo ${i + 1} of 10...`);
+      const link    = document.createElement('a');
+      link.download = `photobooth_photo_${String(i + 1).padStart(2, '0')}.jpg`;
+      link.href     = S.photos[i];
+      link.click();
+      await pause(600);
+    }
+    await pause(600);
+    loading('Downloading template photo...');
+    const tplLink    = document.createElement('a');
+    tplLink.download = `photobooth_template.jpg`;
+    tplLink.href     = $('tpl-out').toDataURL('image/jpeg', 1.0);
+    tplLink.click();
+    await pause(600);
+    loading('Downloading GIF...');
+    const gifLink    = document.createElement('a');
+    gifLink.download = `photobooth_animation.gif`;
+    gifLink.href     = S.gifDataUrl;
+    gifLink.click();
+    await pause(400);
+    loading(false);
+    alert('✅ All files downloaded!\n\n• 10 individual photos\n• 1 template photo\n• 1 GIF animation');
+  } catch (err) {
+    loading(false);
+    alert('Download error: ' + err.message);
+  }
+}
 $('btn-print').addEventListener('click',()=>{
-  const imgSrc=$('tpl-out').toDataURL('image/jpeg',.95);const pw=window.open('','_blank');
+  const imgSrc=$('tpl-out').toDataURL('image/jpeg',1.0);const pw=window.open('','_blank');
   pw.document.write(`<!DOCTYPE html><html><head><style>*{margin:0;padding:0}body{display:flex;justify-content:center;align-items:center;min-height:100vh}img{max-width:100%}@media print{img{width:100%}}</style></head><body><img src="${imgSrc}" onload="setTimeout(()=>{window.print();window.close();},300)"></body></html>`);
   pw.document.close();
 });
@@ -402,10 +471,12 @@ $('btn-new').addEventListener('click',()=>{
   $('prog-fill').style.width='0%';$('cap-label').textContent='Ready';
   document.querySelectorAll('.count-btn').forEach(b=>b.classList.remove('active'));
   $('btn-go-cam').disabled=true;show('welcome');
+  $('btn-download-all').addEventListener('click', () => downloadAll());
 });
 </script>
 </body>
 </html>
+
 
 
 
