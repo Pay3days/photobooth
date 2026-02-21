@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PhotoBooth</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
+<title>PhotoBooth</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0f0f1a;color:#eaeaea;font-family:sans-serif;width:100%;height:100vh;overflow:hidden}
-.screen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column}
+.screen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;overflow-y:auto}
 .screen.active{display:flex}
 .screen-content{padding:40px 24px;max-width:780px;width:100%;text-align:center}
 .screen-content.wide{max-width:1140px}
@@ -30,9 +33,9 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
 .tpl-card{background:#16213e;border:3px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;cursor:pointer}
 .tpl-card:hover,.tpl-card.sel{border-color:#e94560}
 .tpl-card canvas{display:block;width:100%}
-.tpl-name{padding:10px;font-size:.9rem;font-weight:600;text-align:center}
+.tpl-name{padding:10px;font-size:.9rem;font-weight:600;text-align:center;color:#eaeaea}
 .cam-wrap{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;flex-direction:column;overflow:hidden}
-#cam-video{flex:1;width:100%;max-height:calc(100vh - 110px);object-fit:cover;display:block}
+#cam-video{flex:1;width:100%;object-fit:cover;display:block;min-height:0}
 .cnt-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:10}
 .cnt-overlay.hidden{display:none}
 #cnt-ring{position:relative;width:190px;height:190px}
@@ -43,7 +46,7 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
 .cam-flash{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;opacity:0;pointer-events:none;z-index:20}
 .cam-flash.go{animation:flash .35s ease forwards}
 @keyframes flash{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
-.cam-hud{background:rgba(8,8,18,.95);padding:10px 16px;height:110px;height:auto;flex-shrink:0;display:flex;align-items:center;gap:16px;z-index:50;position:relative}
+.cam-hud{background:rgba(8,8,18,.95);padding:10px 16px;min-height:110px;height:auto;flex-shrink:0;display:flex;align-items:center;gap:16px;z-index:50;position:relative}
 .strip-wrap{flex:1;overflow:hidden}
 .photo-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
 .photo-strip .thumb{width:88px;height:66px;object-fit:cover;border-radius:7px;border:2px solid transparent;flex-shrink:0}
@@ -62,21 +65,22 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
 .sel-item{position:relative;cursor:pointer;border-radius:10px;overflow:hidden;border:3px solid transparent;aspect-ratio:4/3}
 .sel-item img{width:100%;height:100%;object-fit:cover;display:block}
 .sel-item.sel{border-color:#e94560}
-.sel-badge{display:none;position:absolute;top:6px;right:6px;width:28px;height:28px;background:#e94560;border-radius:50%;align-items:center;justify-content:center;font-size:.78rem;font-weight:700}
+.sel-badge{display:none;position:absolute;top:6px;right:6px;width:28px;height:28px;background:#e94560;border-radius:50%;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#fff}
 .sel-item.sel .sel-badge{display:flex}
 .prev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:24px}
+@media(max-width:860px){.prev-grid{grid-template-columns:1fr}}
 .prev-card{background:#16213e;border-radius:14px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px}
 .prev-card h3{color:#f5a623;font-size:.95rem}
 .prev-img{width:100%;background:#000;border-radius:10px;max-height:300px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .prev-img canvas,.prev-img img{max-width:100%;max-height:300px;object-fit:contain}
 .qr-box{background:#fff;border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center}
-.qr-url{font-size:.68rem;color:rgba(234,234,234,.5);word-break:break-all;max-width:230px}
+.qr-url{font-size:.68rem;color:rgba(234,234,234,.5);word-break:break-all;max-width:230px;text-align:center}
 .btn-pri{background:#e94560;color:#fff;border:none;padding:13px 30px;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer}
 .btn-pri:disabled{opacity:.4;cursor:not-allowed}
 .btn-lg{padding:16px 42px;font-size:1.1rem}
 .btn-sec{background:#16213e;color:#eaeaea;border:2px solid rgba(255,255,255,.08);padding:13px 30px;border-radius:50px;font-size:1rem;font-weight:600;cursor:pointer}
 .btn-ghost{background:rgba(255,255,255,.07);color:#eaeaea;border:1px solid rgba(255,255,255,.08);padding:8px 20px;border-radius:20px;font-size:.88rem;cursor:pointer}
-.row-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.row-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .loading{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,15,26,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
 .loading.hidden{display:none}
 .spinner{width:54px;height:54px;border:5px solid rgba(233,69,96,.18);border-top-color:#e94560;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:18px}
@@ -86,6 +90,7 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
 </head>
 <body>
 
+<!-- SCREEN 1 — COUNT -->
 <div id="screen-welcome" class="screen active">
   <div class="screen-content">
     <div class="logo">📸</div>
@@ -100,22 +105,27 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
         <div class="count-preview c2 r3"><span></span><span></span><span></span><span></span><span></span><span></span></div>
         <strong>6 Photos</strong><small>2 x 3</small>
       </button>
+      <button class="count-btn" data-count="8">
+        <div class="count-preview c2 r4"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <strong>8 Photos</strong><small>2 x 4</small>
+      </button>
     </div>
   </div>
 </div>
 
+<!-- SCREEN 2 — TEMPLATE (shown AFTER selection now) -->
 <div id="screen-template" class="screen">
   <div class="screen-content wide">
     <h2>Choose a Template Style</h2>
     <p class="subtitle">Select a design for your photo layout</p>
     <div class="tpl-grid" id="tpl-grid"></div>
     <div class="row-actions">
-      <button id="btn-back-w" class="btn-sec">Back</button>
-      <button id="btn-go-cam" class="btn-pri" disabled id="btn-go-cam">Open Camera</button>
+      <button id="btn-go-preview" class="btn-pri" disabled>Apply Template →</button>
     </div>
   </div>
 </div>
 
+<!-- SCREEN 3 — CAMERA -->
 <div id="screen-camera" class="screen">
   <div class="cam-wrap">
     <video id="cam-video" autoplay playsinline muted></video>
@@ -126,21 +136,22 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
           <circle cx="60" cy="60" r="54" class="ring-bg"/>
           <circle cx="60" cy="60" r="54" class="ring-fg" id="cnt-ring-fg"/>
         </svg>
-        <span id="cnt-num">3</span>
+        <span id="cnt-num">5</span>
       </div>
     </div>
     <div id="cam-flash" class="cam-flash"></div>
     <div class="cam-hud">
       <div class="strip-wrap"><div class="photo-strip" id="photo-strip"></div></div>
       <div class="hud-status">
-        <span id="cap-label">Ready</span>
+        <span id="cap-label">Tap Start to begin</span>
         <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
-        <button id="btn-start-cap" class="btn-pri btn-lg">Start (10 photos)</button>
+        <button id="btn-start-cap" class="btn-pri btn-lg">▶ Start (10 photos)</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- SCREEN 4 — SELECT -->
 <div id="screen-select" class="screen">
   <div class="screen-content wide">
     <div class="sel-header">
@@ -157,33 +168,34 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
       </div>
     </div>
     <div class="sel-grid" id="sel-grid"></div>
-    <div class="row-actions" style="margin-top:22px">
-      <button id="btn-confirm" class="btn-pri btn-lg" disabled>Confirm</button>
+    <div class="row-actions">
+      <button id="btn-confirm" class="btn-pri btn-lg" disabled>Confirm →</button>
     </div>
   </div>
 </div>
 
+<!-- SCREEN 5 — PREVIEW -->
 <div id="screen-preview" class="screen">
   <div class="screen-content wide">
-    <h2>Your Photos Are Ready!</h2>
+    <h2>🎉 Your Photos Are Ready!</h2>
     <div class="prev-grid">
       <div class="prev-card">
-        <h3>Template Photo</h3>
+        <h3>📋 Template Photo</h3>
         <div class="prev-img"><canvas id="tpl-out"></canvas></div>
-        <button class="btn-ghost" onclick="downloadTemplate()">Download</button>
+        <button class="btn-ghost" onclick="downloadTemplate()">⬇ Download</button>
       </div>
       <div class="prev-card">
-        <h3>GIF Animation</h3>
+        <h3>🎞 GIF Animation</h3>
         <div class="prev-img"><img id="gif-out" alt="GIF"></div>
-        <button class="btn-ghost" onclick="downloadGif()">Download GIF</button>
+        <button class="btn-ghost" onclick="downloadGif()">⬇ Download GIF</button>
       </div>
       <div class="prev-card">
-        <h3>Scan QR Code</h3>
+        <h3>📱 Scan QR Code</h3>
         <div id="qr-out" class="qr-box"></div>
         <p id="qr-url" class="qr-url"></p>
       </div>
     </div>
-    <div class="row-actions" style="margin-top:28px">
+    <div class="row-actions">
       <button id="btn-print" class="btn-pri btn-lg">🖨 Print</button>
       <button id="btn-download-all" class="btn-pri btn-lg">⬇ Download All</button>
       <button id="btn-new" class="btn-sec">↺ New Session</button>
@@ -191,6 +203,7 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
   </div>
 </div>
 
+<!-- LOADING -->
 <div id="loading" class="loading hidden">
   <div class="spinner"></div>
   <p id="load-msg">Processing...</p>
@@ -199,174 +212,262 @@ h2{font-size:1.8rem;margin-bottom:8px;color:#eaeaea}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
 <script>
-const IMGBB_KEY = 'f4b3c48a50c7abd0c5abbe94f82250fe';
-const S = {count:4,template:null,photos:[],selected:[],gifDataUrl:null,workerUrl:null,timerHandle:null};
+// ── PASTE YOUR IMGBB KEY HERE ──
+const IMGBB_KEY = 'PASTE_YOUR_KEY_HERE';
+
+// ── STATE ──
+const S = {
+  count:4, template:null, photos:[], selected:[],
+  gifDataUrl:null, workerUrl:null, timerHandle:null
+};
+
+// ── TEMPLATES ──
 const TEMPLATES = [
-  {id:'classic',name:'Classic',bg:'#ffffff',fg:'#222222',frame:'#cccccc'},
-  {id:'dark',name:'Modern Dark',bg:'#1a1a2e',fg:'#e94560',frame:'#e94560'},
-  {id:'vintage',name:'Vintage',bg:'#f5e6c8',fg:'#8B4513',frame:'#a0522d'},
-  {id:'neon',name:'Neon Night',bg:'#050510',fg:'#00ff87',frame:'#00ff87'},
-  {id:'pastel',name:'Pastel Dream',bg:'#fce4ec',fg:'#d81b60',frame:'#f48fb1'},
-  {id:'gold',name:'Gold Luxury',bg:'#111111',fg:'#ffd700',frame:'#ffd700'},
+  {id:'classic',  name:'Clean White',   type:'color', bg:'#ffffff', fg:'#333333', frame:'#dddddd'},
+  {id:'dark',     name:'Midnight Red',  type:'color', bg:'#0d0d0d', fg:'#e94560', frame:'#e94560'},
+  {id:'vintage',  name:'Vintage Brown', type:'color', bg:'#f5e6c8', fg:'#5c3317', frame:'#a0522d'},
+  {id:'neon',     name:'Neon Green',    type:'color', bg:'#000000', fg:'#00ff87', frame:'#00ff87'},
+  {id:'pastel',   name:'Pink Pastel',   type:'color', bg:'#fff0f6', fg:'#d81b60', frame:'#f48fb1'},
+  {id:'gold',     name:'Black Gold',    type:'color', bg:'#0a0a0a', fg:'#ffd700', frame:'#ffd700'},
+  {id:'blue',     name:'Ocean Blue',    type:'color', bg:'#e3f2fd', fg:'#0d47a1', frame:'#42a5f5'},
+  {id:'purple',   name:'Royal Purple',  type:'color', bg:'#1a0033', fg:'#ce93d8', frame:'#9c27b0'},
+  {id:'sunset',   name:'Sunset',        type:'color', bg:'#fff3e0', fg:'#e65100', frame:'#ff9800'},
+  {id:'minimal',  name:'Minimal Gray',  type:'color', bg:'#f5f5f5', fg:'#212121', frame:'#bdbdbd'},
 ];
+
+// ── HELPERS ──
 const $ = id => document.getElementById(id);
-const sc = {welcome:$('screen-welcome'),template:$('screen-template'),camera:$('screen-camera'),select:$('screen-select'),preview:$('screen-preview')};
-const sleep = ms => new Promise(r => setTimeout(r,ms));
+const sc = {
+  welcome:  $('screen-welcome'),
+  template: $('screen-template'),
+  camera:   $('screen-camera'),
+  select:   $('screen-select'),
+  preview:  $('screen-preview')
+};
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-function show(name){Object.values(sc).forEach(s=>s.classList.remove('active'));sc[name].classList.add('active');}
-function loading(msg){if(msg){$('load-msg').textContent=msg;$('loading').classList.remove('hidden')}else{$('loading').classList.add('hidden')}}
-function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
-function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
-function drawCover(ctx,img,x,y,w,h){const s=Math.max(w/img.width,h/img.height);ctx.drawImage(img,x+(w-img.width*s)/2,y+(h-img.height*s)/2,img.width*s,img.height*s);}
+function show(name) {
+  Object.values(sc).forEach(s => s.classList.remove('active'));
+  sc[name].classList.add('active');
+}
+function loading(msg) {
+  if (msg) { $('load-msg').textContent = msg; $('loading').classList.remove('hidden'); }
+  else      { $('loading').classList.add('hidden'); }
+}
+function loadImg(src) {
+  return new Promise((res, rej) => {
+    const i = new Image();
+    i.crossOrigin = 'anonymous';
+    i.onload  = () => res(i);
+    i.onerror = rej;
+    i.src = src;
+  });
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y,   x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x,   y+h, r);
+  ctx.arcTo(x,   y+h, x,   y,   r);
+  ctx.arcTo(x,   y,   x+w, y,   r);
+  ctx.closePath();
+}
+function drawCover(ctx, img, x, y, w, h) {
+  const s = Math.max(w/img.width, h/img.height);
+  ctx.drawImage(img, x+(w-img.width*s)/2, y+(h-img.height*s)/2, img.width*s, img.height*s);
+}
 
-(async()=>{try{const blob=await fetch('https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js').then(r=>r.blob());S.workerUrl=URL.createObjectURL(blob);}catch(e){console.warn('GIF worker preload failed',e);}})();
+// Pre-fetch GIF worker
+(async () => {
+  try {
+    const blob  = await fetch('https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js').then(r => r.blob());
+    S.workerUrl = URL.createObjectURL(blob);
+  } catch(e) { console.warn('GIF worker preload failed', e); }
+})();
 
+// ══════════════════════════════
+// SCREEN 1 — COUNT SELECTION
+// ══════════════════════════════
 document.querySelectorAll('.count-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    S.count = parseInt(btn.dataset.count);
-    $('req-count').textContent = S.count;
+    S.count    = parseInt(btn.dataset.count);
     S.photos   = [];
     S.selected = [];
-    $('photo-strip').innerHTML = '';
-    $('prog-fill').style.width = '0%';
-    $('cap-label').textContent = 'Ready';
-    show('camera');  // go to camera screen first
-  });
-});
-
-function buildTplGrid() {
-  const grid = $('tpl-grid');
-  grid.innerHTML = '';
-  S.template = null;
-  $('btn-go-cam').disabled = true;
-  $('btn-go-cam').textContent = S.photos.length === 10 ? 'Apply Template →' : 'Open Camera →';
-  TEMPLATES.forEach(tpl=>{
-    const card=document.createElement('div');card.className='tpl-card';
-    const cvs=document.createElement('canvas');cvs.width=200;cvs.height=270;
-    drawTplPreview(cvs,tpl,S.count);
-    const lbl=document.createElement('div');lbl.className='tpl-name';lbl.textContent=tpl.name;
-    card.append(cvs,lbl);
-    card.addEventListener('click',()=>{document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('sel'));card.classList.add('sel');S.template=tpl;$('btn-go-cam').disabled=false;});
-    grid.appendChild(card);
-  });
-}
-function drawTplPreview(canvas,tpl,count){
-  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
-  const PAD=10,HDR=34,cols=2,rows=Math.ceil(count/cols);
-  const cW=(W-PAD*(cols+1))/cols;const cH=(H-PAD*(rows+1)-HDR-20)/rows;
-  ctx.fillStyle=tpl.bg;ctx.fillRect(0,0,W,H);
-  ctx.fillStyle=tpl.fg;ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('Photo Booth',W/2,18);
-  for(let i=0;i<count;i++){
-    const col=i%cols,row=Math.floor(i/cols);const x=PAD+col*(cW+PAD),y=HDR+PAD+row*(cH+PAD);
-    ctx.fillStyle=tpl.fg+'22';roundRect(ctx,x,y,cW,cH,6);ctx.fill();
-    ctx.strokeStyle=tpl.frame;ctx.lineWidth=1.5;roundRect(ctx,x,y,cW,cH,6);ctx.stroke();
-  }
-}
-$('btn-back-w').addEventListener('click',()=>show('welcome'));
-$('btn-go-cam').addEventListener('click', async () => {
-  if (S.photos.length === 10) {
-    await proceedToPreview();
-  } else {
-    await initCamera();
+    $('req-count').textContent  = S.count;
+    $('photo-strip').innerHTML  = '';
+    $('prog-fill').style.width  = '0%';
+    $('cap-label').textContent  = 'Tap Start to begin';
     show('camera');
-  }
+  });
 });
 
-let mediaStream=null;
+// ══════════════════════════════
+// SCREEN 3 — CAMERA
+// ══════════════════════════════
+let mediaStream = null;
+
 async function initCamera() {
-  if (mediaStream) return;
+  if (mediaStream) return true;
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'user',
-        width:  { ideal: 4096 },
-        height: { ideal: 2160 },
-        frameRate: { ideal: 60 },
-        aspectRatio: { ideal: 16/9 }
-      },
+      video: { facingMode:'user', width:{ideal:4096}, height:{ideal:2160} },
       audio: false
     });
     $('cam-video').srcObject = mediaStream;
     await $('cam-video').play();
-  } catch (err) {
+    return true;
+  } catch(e) {
     try {
       mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode:'user', width:{ideal:1920}, height:{ideal:1080} },
         audio: false
       });
       $('cam-video').srcObject = mediaStream;
       await $('cam-video').play();
-    } catch (err2) {
-      alert('Camera access denied. Allow camera in browser settings.');
+      return true;
+    } catch(e2) {
+      alert('Camera access denied.\nOn iPad: Settings → Safari → Camera → Allow');
+      return false;
     }
   }
 }
+
+// Start button — direct user tap = camera permission works on Safari
 $('btn-start-cap').addEventListener('click', async () => {
-  if (!mediaStream) {
-    await initCamera();    
+  $('btn-start-cap').disabled = true;
+  $('cap-label').textContent  = 'Starting camera...';
+  const ok = await initCamera();
+  if (!ok) {
+    $('btn-start-cap').disabled = false;
+    $('cap-label').textContent  = 'Tap Start to begin';
+    return;
   }
-  if (mediaStream) {    
-    startCapture();
-  }
+  startCapture();
 });
+
 async function startCapture() {
-  if (!mediaStream) return;
   S.photos   = [];
   S.selected = [];
-  $('photo-strip').innerHTML  = '';
-  $('btn-start-cap').disabled = true;
-  $('prog-fill').style.width  = '0%';
-  for(let i=0;i<10;i++){$('cap-label').textContent=`Photo ${i+1} of 10`;await runCountdown(5);captureFrame(i);$('prog-fill').style.width=`${(i+1)*10}%`;await sleep(400);}
-  $('cap-label').textContent='Done! 10 photos taken';$('btn-start-cap').disabled=false;
-  setTimeout(()=>{buildSelectionScreen();show('select');},700);
+  $('photo-strip').innerHTML = '';
+  $('prog-fill').style.width = '0%';
+
+  for (let i = 0; i < 10; i++) {
+    $('cap-label').textContent = `Photo ${i+1} of 10`;
+    await runCountdown(5);
+    captureFrame(i);
+    $('prog-fill').style.width = `${(i+1)*10}%`;
+    await sleep(300);
+  }
+
+  $('cap-label').textContent  = '✅ Done! 10 photos taken';
+  $('btn-start-cap').disabled = false;
+
+  await sleep(800);
+  buildSelectionScreen();
+  show('select');
 }
-async function runCountdown(from){
-  const overlay=$('cnt-overlay'),numEl=$('cnt-num'),ringEl=$('cnt-ring-fg'),circum=339;
+
+async function runCountdown(from) {
+  const overlay = $('cnt-overlay');
+  const numEl   = $('cnt-num');
+  const ringEl  = $('cnt-ring-fg');
+  const circum  = 339;
   overlay.classList.remove('hidden');
-  for(let n=from;n>=1;n--){numEl.textContent=n;ringEl.style.strokeDashoffset=circum*(1-n/from);await sleep(950);}
-  overlay.classList.add('hidden');ringEl.style.strokeDashoffset=0;
+  for (let n = from; n >= 1; n--) {
+    numEl.textContent = n;
+    ringEl.style.strokeDashoffset = circum * (1 - n/from);
+    await sleep(950);
+  }
+  overlay.classList.add('hidden');
+  ringEl.style.strokeDashoffset = 0;
 }
+
 function captureFrame(idx) {
   const video  = $('cam-video');
   const canvas = $('cap-canvas');
   canvas.width  = video.videoWidth  || 1920;
   canvas.height = video.videoHeight || 1080;
   const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled  = true;
-  ctx.imageSmoothingQuality  = 'high';
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   const url = canvas.toDataURL('image/jpeg', 1.0);
-  const flash=$('cam-flash');flash.classList.add('go');setTimeout(()=>flash.classList.remove('go'),350);
-  const img=document.createElement('img');img.src=url;img.className='thumb latest';
-  $('photo-strip').appendChild(img);img.scrollIntoView({behavior:'smooth',inline:'end'});
-  setTimeout(()=>img.classList.remove('latest'),600);
+  S.photos.push(url);
+
+  const flash = $('cam-flash');
+  flash.classList.add('go');
+  setTimeout(() => flash.classList.remove('go'), 350);
+
+  const img = document.createElement('img');
+  img.src = url; img.className = 'thumb latest';
+  $('photo-strip').appendChild(img);
+  img.scrollIntoView({ behavior:'smooth', inline:'end' });
+  setTimeout(() => img.classList.remove('latest'), 600);
 }
+
+// ══════════════════════════════
+// SCREEN 4 — PHOTO SELECTION
+// ══════════════════════════════
 function buildSelectionScreen() {
   const grid = $('sel-grid');
   grid.innerHTML = '';
   S.selected = [];
   $('btn-confirm').disabled = true;
+
+  S.photos.forEach((url, idx) => {
+    const item  = document.createElement('div');
+    item.className   = 'sel-item';
+    item.dataset.idx = idx;
+
+    const img   = document.createElement('img');
+    img.src = url; img.alt = `Photo ${idx+1}`;
+
+    const badge = document.createElement('div');
+    badge.className = 'sel-badge';
+
+    item.append(img, badge);
+    item.addEventListener('click', () => toggleSel(item, idx));
+    grid.appendChild(item);
+  });
+
+  startSelTimer();
+}
+
+function toggleSel(item, idx) {
+  if (item.classList.contains('sel')) {
+    item.classList.remove('sel');
+    S.selected = S.selected.filter(i => i !== idx);
+  } else {
+    if (S.selected.length >= S.count) {
+      const oldIdx = S.selected.shift();
+      document.querySelector(`.sel-item[data-idx="${oldIdx}"]`).classList.remove('sel');
+    }
+    item.classList.add('sel');
+    S.selected.push(idx);
   }
-  S.photos.forEach((url,idx)=>{
-    const item=document.createElement('div');item.className='sel-item';item.dataset.idx=idx;
-    const img=document.createElement('img');img.src=url;img.alt=`Photo ${idx+1}`;
-    const badge=document.createElement('div');badge.className='sel-badge';
-    item.append(img,badge);item.addEventListener('click',()=>toggleSel(item,idx));grid.appendChild(item);
-  });startSelTimer();
+  document.querySelectorAll('.sel-item').forEach(el => {
+    const pos = S.selected.indexOf(parseInt(el.dataset.idx));
+    el.querySelector('.sel-badge').textContent = pos >= 0 ? pos+1 : '';
+  });
+  $('btn-confirm').disabled = S.selected.length !== S.count;
 }
-function toggleSel(item,idx){
-  if(item.classList.contains('sel')){item.classList.remove('sel');S.selected=S.selected.filter(i=>i!==idx);}
-  else{if(S.selected.length>=S.count){const oldIdx=S.selected.shift();document.querySelector(`.sel-item[data-idx="${oldIdx}"]`).classList.remove('sel');}item.classList.add('sel');S.selected.push(idx);}
-  document.querySelectorAll('.sel-item').forEach(el=>{const pos=S.selected.indexOf(parseInt(el.dataset.idx));el.querySelector('.sel-badge').textContent=pos>=0?pos+1:'';});
-  $('btn-confirm').disabled=S.selected.length!==S.count;
+
+function startSelTimer() {
+  clearInterval(S.timerHandle);
+  let left = 60;
+  const circum = 214;
+  $('sel-secs').textContent = left;
+  $('sel-fg').style.strokeDashoffset = 0;
+  S.timerHandle = setInterval(() => {
+    left--;
+    $('sel-secs').textContent = left;
+    $('sel-fg').style.strokeDashoffset = circum * (1 - left/60);
+    if (left <= 0) { clearInterval(S.timerHandle); autoFillAndProceed(); }
+  }, 1000);
 }
-function startSelTimer(){
-  clearInterval(S.timerHandle);let left=60;const circum=214;$('sel-secs').textContent=left;$('sel-fg').style.strokeDashoffset=0;
-  S.timerHandle=setInterval(()=>{left--;$('sel-secs').textContent=left;$('sel-fg').style.strokeDashoffset=circum*(1-left/60);if(left<=0){clearInterval(S.timerHandle);autoFillAndProceed();}},1000);
-}
+
 function autoFillAndProceed() {
   if (S.selected.length < S.count) {
     const unsel = S.photos.map((_,i) => i).filter(i => !S.selected.includes(i));
@@ -376,142 +477,298 @@ function autoFillAndProceed() {
       document.querySelector(`.sel-item[data-idx="${idx}"]`)?.classList.add('sel');
     }
   }
+  clearInterval(S.timerHandle);
   buildTplGrid();
   show('template');
 }
+
 $('btn-confirm').addEventListener('click', () => {
   clearInterval(S.timerHandle);
   buildTplGrid();
   show('template');
 });
 
-async function proceedToPreview(){
-  try{
-    loading('Composing template photo...');const tplCanvas=await composeTemplate();
-    const out=$('tpl-out');out.width=tplCanvas.width;out.height=tplCanvas.height;out.getContext('2d').drawImage(tplCanvas,0,0);
-    loading('Generating GIF...');S.gifDataUrl=await makeGIF();$('gif-out').src=S.gifDataUrl;
-    loading('Generating QR code...');await uploadAndQR(tplCanvas);
-    loading(false);show('preview');
-  }catch(err){loading(false);console.error(err);alert('Error: '+err.message);}
+// ══════════════════════════════
+// SCREEN 2 — TEMPLATE PICKER
+// ══════════════════════════════
+function buildTplGrid() {
+  const grid = $('tpl-grid');
+  grid.innerHTML = '';
+  S.template = null;
+  $('btn-go-preview').disabled = true;
+
+  TEMPLATES.forEach(tpl => {
+    const card = document.createElement('div');
+    card.className = 'tpl-card';
+
+    const cvs = document.createElement('canvas');
+    cvs.width = 200; cvs.height = 270;
+    drawTplPreview(cvs, tpl, S.count);
+
+    const lbl = document.createElement('div');
+    lbl.className   = 'tpl-name';
+    lbl.textContent = tpl.name;
+
+    card.append(cvs, lbl);
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.tpl-card').forEach(c => c.classList.remove('sel'));
+      card.classList.add('sel');
+      S.template = tpl;
+      $('btn-go-preview').disabled = false;
+    });
+    grid.appendChild(card);
+  });
 }
-async function composeTemplate(){
-  const tpl=S.template,count=S.count,photos=S.selected.map(i=>S.photos[i]);
-  const W=2400,cols=2,rows=Math.ceil(count/cols),HDR=90,FTR=50,PAD=36;
-  const cW=(W-PAD*(cols+1))/cols,cH=Math.round(cW*.75);
-  const H=HDR+PAD+rows*cH+(rows-1)*PAD+PAD+FTR;
-  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
-  const ctx=canvas.getContext('2d');
-  ctx.fillStyle=tpl.bg;ctx.fillRect(0,0,W,H);
-  ctx.font='bold 42px sans-serif';ctx.fillStyle=tpl.fg;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('Photo Booth',W/2,HDR/2);
-  const imgs=await Promise.all(photos.map(loadImg));
-  for(let i=0;i<count&&i<imgs.length;i++){
-    const col=i%cols,row=Math.floor(i/cols);const x=PAD+col*(cW+PAD),y=HDR+PAD+row*(cH+PAD);
-    ctx.save();roundRect(ctx,x,y,cW,cH,14);ctx.clip();drawCover(ctx,imgs[i],x,y,cW,cH);ctx.restore();
-    ctx.strokeStyle=tpl.frame;ctx.lineWidth=3;roundRect(ctx,x,y,cW,cH,14);ctx.stroke();
+
+function drawTplPreview(canvas, tpl, count) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const PAD = 10, HDR = 34, cols = 2, rows = Math.ceil(count/cols);
+  const cW = (W - PAD*(cols+1)) / cols;
+  const cH = (H - PAD*(rows+1) - HDR - 20) / rows;
+  ctx.fillStyle = tpl.bg || '#1a1a2e';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = tpl.fg || '#ffffff';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('Photo Booth', W/2, 18);
+  for (let i = 0; i < count; i++) {
+    const col = i % cols, row = Math.floor(i/cols);
+    const x = PAD + col*(cW+PAD), y = HDR + PAD + row*(cH+PAD);
+    ctx.fillStyle = (tpl.fg || '#ffffff') + '22';
+    roundRect(ctx, x, y, cW, cH, 6); ctx.fill();
+    ctx.strokeStyle = tpl.frame || '#ffffff';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, x, y, cW, cH, 6); ctx.stroke();
   }
-  const date=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  ctx.font='26px sans-serif';ctx.fillStyle=tpl.fg+'aa';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(date,W/2,H-14);
+}
+
+$('btn-go-preview').addEventListener('click', () => proceedToPreview());
+
+// ══════════════════════════════
+// SCREEN 5 — PREVIEW
+// ══════════════════════════════
+async function proceedToPreview() {
+  try {
+    loading('Composing template photo...');
+    const tplCanvas = await composeTemplate();
+    const out = $('tpl-out');
+    out.width  = tplCanvas.width;
+    out.height = tplCanvas.height;
+    out.getContext('2d').drawImage(tplCanvas, 0, 0);
+
+    loading('Generating GIF (this may take a moment)...');
+    S.gifDataUrl = await makeGIF();
+    $('gif-out').src = S.gifDataUrl;
+
+    loading('Generating QR code...');
+    await uploadAndQR(tplCanvas);
+
+    loading(false);
+    show('preview');
+  } catch(err) {
+    loading(false);
+    console.error(err);
+    alert('Error: ' + err.message);
+  }
+}
+
+async function composeTemplate() {
+  const tpl    = S.template;
+  const count  = S.count;
+  const photos = S.selected.map(i => S.photos[i]);
+
+  if (tpl.type === 'image') {
+    const canvas = document.createElement('canvas');
+    canvas.width  = tpl.canvasW;
+    canvas.height = tpl.canvasH;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    const bgImg = await loadImg(tpl.src);
+    ctx.drawImage(bgImg, 0, 0, tpl.canvasW, tpl.canvasH);
+    const imgs  = await Promise.all(photos.map(loadImg));
+    const slots = tpl.slots.slice(0, count);
+    for (let i = 0; i < slots.length && i < imgs.length; i++) {
+      const {x, y, w, h} = slots[i];
+      ctx.save();
+      roundRect(ctx, x, y, w, h, 10);
+      ctx.clip();
+      drawCover(ctx, imgs[i], x, y, w, h);
+      ctx.restore();
+    }
+    return canvas;
+  }
+
+  // Color mode
+  const W    = 2400;
+  const cols = 2;
+  const rows = Math.ceil(count/cols);
+  const HDR  = 120, FTR = 80, PAD = 60;
+  const cW   = (W - PAD*(cols+1)) / cols;
+  const cH   = Math.round(cW * 0.75);
+  const H    = HDR + PAD + rows*cH + (rows-1)*PAD + PAD + FTR;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  ctx.fillStyle = tpl.bg;
+  ctx.fillRect(0, 0, W, H);
+  ctx.font = 'bold 72px sans-serif';
+  ctx.fillStyle = tpl.fg;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('Photo Booth', W/2, HDR/2);
+
+  const imgs = await Promise.all(photos.map(loadImg));
+  for (let i = 0; i < count && i < imgs.length; i++) {
+    const col = i%cols, row = Math.floor(i/cols);
+    const x = PAD + col*(cW+PAD);
+    const y = HDR + PAD + row*(cH+PAD);
+    ctx.save();
+    roundRect(ctx, x, y, cW, cH, 20);
+    ctx.clip();
+    drawCover(ctx, imgs[i], x, y, cW, cH);
+    ctx.restore();
+    ctx.strokeStyle = tpl.frame;
+    ctx.lineWidth = 5;
+    roundRect(ctx, x, y, cW, cH, 20);
+    ctx.stroke();
+  }
+
+  const date = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+  ctx.font = '44px sans-serif';
+  ctx.fillStyle = tpl.fg + 'aa';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText(date, W/2, H-20);
   return canvas;
 }
+
 async function makeGIF() {
   return new Promise(async (resolve, reject) => {
     const gif = new GIF({
-      workers:      4,   
-      quality:      1,    
+      workers:      4,
+      quality:      1,
       width:        1280,
       height:       720,
       workerScript: S.workerUrl || 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'
     });
     const tmp = document.createElement('canvas');
-    tmp.width  = 1280;
-    tmp.height = 720;
-    const ctx=tmp.getContext('2d');
-    const imgs=await Promise.all(S.photos.map(loadImg));
-    imgs.forEach(img=>{ctx.fillStyle='#000';ctx.fillRect(0,0,640,480);drawCover(ctx,img,0,0,640,480);gif.addFrame(tmp,{copy:true,delay:450});});
-    gif.on('finished',blob=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsDataURL(blob);});
-    gif.on('error',reject);gif.render();
+    tmp.width  = 1280; tmp.height = 720;
+    const ctx  = tmp.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    const imgs = await Promise.all(S.photos.map(loadImg));
+    imgs.forEach(img => {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, 1280, 720);
+      drawCover(ctx, img, 0, 0, 1280, 720);
+      gif.addFrame(tmp, { copy:true, delay:450 });
+    });
+    gif.on('finished', blob => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+    gif.on('error', reject);
+    gif.render();
   });
 }
-async function uploadAndQR(tplCanvas){
-  const qrBox=$('qr-out');qrBox.innerHTML='';
-  try{
-    if(!IMGBB_KEY||IMGBB_KEY==='PASTE_YOUR_KEY_HERE')throw new Error('No API key');
-    const b64=tplCanvas.toDataURL('image/jpeg',1.0).split(',')[1];const form=new FormData();form.append('image',b64);
-    const res=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:'POST',body:form});
-    const data=await res.json();if(!data.success)throw new Error('Upload failed');
-    const url=data.data.display_url;
-    new QRCode(qrBox,{text:url,width:200,height:200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
-    $('qr-url').textContent=url;
-  }catch(err){
-    console.warn('ImgBB:',err.message);
-    new QRCode(qrBox,{text:`PhotoBooth-${Date.now()}`,width:200,height:200});
-    $('qr-url').textContent='Download photos using buttons below';
+
+async function uploadAndQR(tplCanvas) {
+  const qrBox = $('qr-out');
+  qrBox.innerHTML = '';
+  try {
+    if (!IMGBB_KEY || IMGBB_KEY === 'PASTE_YOUR_KEY_HERE') throw new Error('No API key');
+    const b64  = tplCanvas.toDataURL('image/jpeg', 1.0).split(',')[1];
+    const form = new FormData();
+    form.append('image', b64);
+    const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method:'POST', body:form });
+    const data = await res.json();
+    if (!data.success) throw new Error('Upload failed');
+    const url = data.data.display_url;
+    new QRCode(qrBox, { text:url, width:200, height:200, colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H });
+    $('qr-url').textContent = url;
+  } catch(err) {
+    console.warn('QR fallback:', err.message);
+    new QRCode(qrBox, { text:`PhotoBooth-${Date.now()}`, width:200, height:200 });
+    $('qr-url').textContent = 'Download photos using buttons below';
   }
 }
-function downloadTemplate(){const link=document.createElement('a');link.download=`photobooth_${Date.now()}.jpg`;link.href=$('tpl-out').toDataURL('image/jpeg',1.0);link.click();}
-function downloadGif(){const link=document.createElement('a');link.download=`photobooth_gif_${Date.now()}.gif`;link.href=S.gifDataUrl;link.click();}
+
+// ── DOWNLOADS ──
+function downloadTemplate() {
+  const link = document.createElement('a');
+  link.download = `photobooth_template_${Date.now()}.jpg`;
+  link.href = $('tpl-out').toDataURL('image/jpeg', 1.0);
+  link.click();
+}
+function downloadGif() {
+  const link = document.createElement('a');
+  link.download = `photobooth_animation_${Date.now()}.gif`;
+  link.href = S.gifDataUrl;
+  link.click();
+}
 async function downloadAll() {
-  loading('Preparing your download package...');
+  loading('Preparing all files...');
   const pause = ms => new Promise(r => setTimeout(r, ms));
   try {
     for (let i = 0; i < S.photos.length; i++) {
-      loading(`Downloading photo ${i + 1} of 10...`);
-      const link    = document.createElement('a');
-      link.download = `photobooth_photo_${String(i + 1).padStart(2, '0')}.jpg`;
-      link.href     = S.photos[i];
-      link.click();
-      await pause(600);
+      loading(`Downloading photo ${i+1} of 10...`);
+      const a = document.createElement('a');
+      a.download = `photo_${String(i+1).padStart(2,'0')}.jpg`;
+      a.href     = S.photos[i];
+      a.click();
+      await pause(700);
     }
-    await pause(600);
-    loading('Downloading template photo...');
-    const tplLink    = document.createElement('a');
-    tplLink.download = `photobooth_template.jpg`;
-    tplLink.href     = $('tpl-out').toDataURL('image/jpeg', 1.0);
-    tplLink.click();
-    await pause(600);
+    await pause(500);
+    loading('Downloading template...');
+    const t = document.createElement('a');
+    t.download = 'photobooth_template.jpg';
+    t.href     = $('tpl-out').toDataURL('image/jpeg', 1.0);
+    t.click();
+    await pause(700);
     loading('Downloading GIF...');
-    const gifLink    = document.createElement('a');
-    gifLink.download = `photobooth_animation.gif`;
-    gifLink.href     = S.gifDataUrl;
-    gifLink.click();
+    const g = document.createElement('a');
+    g.download = 'photobooth_animation.gif';
+    g.href     = S.gifDataUrl;
+    g.click();
     await pause(400);
     loading(false);
-    alert('✅ All files downloaded!\n\n• 10 individual photos\n• 1 template photo\n• 1 GIF animation');
-  } catch (err) {
+    alert('✅ Downloaded:\n• 10 individual photos\n• Template photo\n• GIF animation');
+  } catch(err) {
     loading(false);
-    alert('Download error: ' + err.message);
+    alert('Error: ' + err.message);
   }
 }
-$('btn-print').addEventListener('click',()=>{
-  const imgSrc=$('tpl-out').toDataURL('image/jpeg',1.0);const pw=window.open('','_blank');
+
+// ── PRINT ──
+$('btn-print').addEventListener('click', () => {
+  const imgSrc = $('tpl-out').toDataURL('image/jpeg', 1.0);
+  const pw = window.open('', '_blank');
   pw.document.write(`<!DOCTYPE html><html><head><style>*{margin:0;padding:0}body{display:flex;justify-content:center;align-items:center;min-height:100vh}img{max-width:100%}@media print{img{width:100%}}</style></head><body><img src="${imgSrc}" onload="setTimeout(()=>{window.print();window.close();},300)"></body></html>`);
   pw.document.close();
 });
+
+$('btn-download-all').addEventListener('click', () => downloadAll());
+
+// ── NEW SESSION ──
 $('btn-new').addEventListener('click', () => {
   clearInterval(S.timerHandle);
   if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-  // Reset ALL state cleanly
-  S.count      = 4;
-  S.template   = null;
-  S.photos     = [];
-  S.selected   = [];
-  S.gifDataUrl = null;
-  S.workerUrl  = S.workerUrl; // keep worker blob URL
-  $('photo-strip').innerHTML='';$('sel-grid').innerHTML='';$('qr-out').innerHTML='';$('qr-url').textContent='';
-  $('prog-fill').style.width='0%';$('cap-label').textContent='Ready';
-  document.querySelectorAll('.count-btn').forEach(b=>b.classList.remove('active'));
-  $('btn-go-cam').disabled=true;show('welcome');
-  $('btn-download-all').addEventListener('click', () => downloadAll());
+  S.count = 4; S.template = null; S.photos = []; S.selected = []; S.gifDataUrl = null;
+  $('photo-strip').innerHTML = '';
+  $('sel-grid').innerHTML    = '';
+  $('qr-out').innerHTML      = '';
+  $('qr-url').textContent    = '';
+  $('prog-fill').style.width = '0%';
+  $('cap-label').textContent = 'Tap Start to begin';
+  $('btn-start-cap').disabled = false;
+  document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+  show('welcome');
 });
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
