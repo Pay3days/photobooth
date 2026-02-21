@@ -305,8 +305,12 @@ async function initCamera() {
   }
 }
 $('btn-start-cap').addEventListener('click',()=>startCapture());
-async function startCapture(){
-  S.photos=[];$('photo-strip').innerHTML='';$('btn-start-cap').disabled=true;$('prog-fill').style.width='0%';
+async function startCapture() {
+  S.photos   = [];
+  S.selected = [];
+  $('photo-strip').innerHTML  = '';
+  $('btn-start-cap').disabled = true;
+  $('prog-fill').style.width  = '0%';
   for(let i=0;i<10;i++){$('cap-label').textContent=`Photo ${i+1} of 10`;await runCountdown(5);captureFrame(i);$('prog-fill').style.width=`${(i+1)*10}%`;await sleep(400);}
   $('cap-label').textContent='Done! 10 photos taken';$('btn-start-cap').disabled=false;
   setTimeout(()=>{buildSelectionScreen();show('select');},700);
@@ -337,10 +341,6 @@ function buildSelectionScreen() {
   grid.innerHTML = '';
   S.selected = [];
   $('btn-confirm').disabled = true;
-  if (!S.photos || S.photos.length === 0) {
-    alert('No photos found. Please take photos first.');
-    show('camera');
-    return;
   }
   S.photos.forEach((url,idx)=>{
     const item=document.createElement('div');item.className='sel-item';item.dataset.idx=idx;
@@ -498,6 +498,7 @@ $('btn-new').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
